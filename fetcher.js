@@ -1,74 +1,56 @@
 const url = process.argv[2];
 const localFilePath = process.argv[3];
-const fs = require("fs");
 const request = require("request");
+const fs = require("fs");
+const readline = require("readline");
 
 request(url, (error, response, body) => {
-  fs.writeFile(localFilePath, body, (err) => {
+  if (error) {
+    console.log("There is an error: " + error);
+    return;
+  }
+  fs.readFile(localFilePath, "utf8", (err, data) => {
     if (err) {
-      console.error(err);
+      console.log("The path does not exist!");
+      return;
     }
-    console.log(
-      `Downloaded and saved ${body.length} bytes to ${localFilePath}`
-    );
+    if (data.length > 0) {
+      //whenever you 'createInterface' you will always need to end with an rl.close()
+      const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+      });
+
+      rl.question(
+        'The file already exists, do you want to over it? (if so press "Y/y") ',
+        (answer) => {
+          if (answer === "Y" || answer === "y") {
+            fs.writeFile(localFilePath, body, (err) => {
+              if (err) {
+                console.log(`This is the error: ${err}`);
+              }
+              console.log(
+                `Downloaded and saved ${body.length} bytes to ${localFilePath}`
+              );
+            });
+            rl.close();
+          } else {
+            console.log("Okay goodbye!");
+            rl.close();
+          }
+        }
+      );
+    } else {
+      fs.writeFile(localFilePath, body, (err) => {
+        if (err) {
+          console.log("err");
+          return;
+        }
+        console.log(
+          `Downloaded and saved ${body.length} bytes to ${localFilePath}`
+        );
+        return;
+      });
+    }
   });
 });
-
-// const readline = require("readline");
-
-// const rl = readline.createInterface({
-//   input: process.stdin,
-//   output: process.stdout,
-// });
-
-// request(url, (error, response, body) => {
-//   if (error) {
-//     console.log("error");
-//   }
-
-//   fs.readFile(localFilePath, function (errors, data) {
-//     if (data.length > 0) {
-//       console.log("Sorry file already exists");
-//       rl.question(
-//         `File already exists. Type Type "Y/y" to overwrite or type "Q/q" to exit: `,
-//         (answer) => {
-//           if (answer === "Q" || answer === "q") {
-//             console.log("Quitting now");
-//             rl.close();
-//             return;
-//           }
-//           if (answer === "Y" || answer === "y") {
-//             fs.writeFile(localFilePath, body, (err) => {
-//               if (err) {
-//                 console.log("error");
-//                 console.log(err);
-//                 rl.close();
-//                 return;
-//               }
-//               console.log(
-//                 `Downloaded and saved ${
-//                   fs.statSync(localFilePath).size
-//                 } bytes to ${localFilePath}`
-//               );
-//               rl.close();
-//             });
-//             return;
-//           }
-//         }
-//       );
-//     } else {
-//       fs.writeFile(localFilePath, body, (err) => {
-//         if (err) {
-//           console.error(err);
-//           rl.close();
-//           return;
-//         }
-//         console.log(
-//           `Downloaded and saved ${
-//             fs.statSync(response.body).size
-//           } bytes to ${localFilePath}`
-//         );
-//       });
-//     }
-//   });
-// });
